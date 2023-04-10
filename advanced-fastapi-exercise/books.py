@@ -1,4 +1,7 @@
+from typing import Optional
+
 from fastapi import FastAPI, Body
+from pydantic import BaseModel, Field
 
 app = FastAPI()
 
@@ -18,6 +21,24 @@ class Book:
         self.rating = rating
 
 
+class BookRequest(BaseModel):
+    id: Optional[int] = Field(title="id is not needed")
+    title: str = Field(min_length=1)
+    author: str = Field(min_length=3, max_length=10)
+    description: str = Field(min_length=1, max_length=5)
+    rating: int = Field(gt=0, lt=10)
+
+    class Config:
+        schema_extra = {
+            'example': {
+                'title': "New book title",
+                'author': "New book author",
+                'description': "New Book description",
+                'rating': 5
+            }
+        }
+
+
 BOOKS = [
     Book(1, "Title One", "Author One", "Description One", 6),
     Book(2, "Title Two", "Author Two", "Description Two", 5),
@@ -33,5 +54,14 @@ def get_all_books():
 
 
 @app.post('/create-book')
-def create_book(request=Body()):
-    BOOKS.append(request)
+def create_book(request: BookRequest):
+    new_book = Book(**request.dict())
+    BOOKS.append(get_id(new_book))
+
+
+def get_id(book: Book):
+    if len(BOOKS) == 0:
+        book.id = 1
+    else:
+        book.id = BOOKS[-1].id + 1
+    return book
