@@ -24,7 +24,7 @@ class Book:
 class BookRequest(BaseModel):
     id: Optional[int] = Field(title="id is not needed")
     title: str = Field(min_length=1)
-    author: str = Field(min_length=3, max_length=10)
+    author: str = Field(min_length=1, max_length=10)
     description: str = Field(min_length=1, max_length=5)
     rating: int = Field(gt=0, lt=10)
 
@@ -65,3 +65,34 @@ def get_id(book: Book):
     else:
         book.id = BOOKS[-1].id + 1
     return book
+
+
+@app.get('/books/{book_id}')
+def get_book_by_id(book_id: int):
+    for book in BOOKS:
+        if book.id == book_id:
+            return book
+
+
+@app.get('/books/')
+def get_books_by_rating(rating: int):
+    return_books = []
+    for book in BOOKS:
+        if book.rating == rating:
+            return_books.append(book)
+    return return_books
+
+
+@app.put('/books/update_book')
+def update_book(book: BookRequest):
+    for i in range(len(BOOKS)):
+        if BOOKS[i].id == book.id:
+            BOOKS[i] = book
+
+
+@app.delete('/books/{book_id}')
+def delete_book_by_id(book_id: int):
+    for i in range(len(BOOKS)):
+        if BOOKS[i].id == book_id:
+            BOOKS.pop(i)
+            break
