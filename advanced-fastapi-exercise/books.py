@@ -12,13 +12,15 @@ class Book:
     author: str
     description: str
     rating: str
+    published_date: str
 
-    def __init__(self, id, title, author, description, rating):
+    def __init__(self, id, title, author, description, rating, published_date):
         self.id = id
         self.title = title
         self.author = author
         self.description = description
         self.rating = rating
+        self.published_date = published_date
 
 
 class BookRequest(BaseModel):
@@ -27,6 +29,7 @@ class BookRequest(BaseModel):
     author: str = Field(min_length=1, max_length=10)
     description: str = Field(min_length=1, max_length=5)
     rating: int = Field(gt=0, lt=10)
+    published_date: int = Field(gt=1900, lt=2023)
 
     class Config:
         schema_extra = {
@@ -34,17 +37,18 @@ class BookRequest(BaseModel):
                 'title': "New book title",
                 'author': "New book author",
                 'description': "New Book description",
-                'rating': 5
+                'rating': 5,
+                'published_date': 2023
             }
         }
 
 
 BOOKS = [
-    Book(1, "Title One", "Author One", "Description One", 6),
-    Book(2, "Title Two", "Author Two", "Description Two", 5),
-    Book(3, "Title Three", "Author Three", "Description Three", 4),
-    Book(4, "Title Four", "Author Four", "Description Four", 3),
-    Book(5, "Title Five", "Author Five", "Description Five", 2),
+    Book(1, "Title One", "Author One", "Description One", 6, 1990),
+    Book(2, "Title Two", "Author Two", "Description Two", 5, 2020),
+    Book(3, "Title Three", "Author Three", "Description Three", 4, 2000),
+    Book(4, "Title Four", "Author Four", "Description Four", 3, 1975),
+    Book(5, "Title Five", "Author Five", "Description Five", 2, 1919),
 ]
 
 
@@ -96,3 +100,10 @@ def delete_book_by_id(book_id: int):
         if BOOKS[i].id == book_id:
             BOOKS.pop(i)
             break
+
+
+@app.get('/books/get_book/{published_date}')
+def get_book_by_published_date(published_date: int):
+    for book in BOOKS:
+        if book.published_date == published_date:
+            return book
