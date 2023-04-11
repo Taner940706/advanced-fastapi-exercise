@@ -1,7 +1,8 @@
 from typing import Optional
 
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Path, Query, HTTPException
 from pydantic import BaseModel, Field
+from starlette import status
 
 app = FastAPI()
 
@@ -52,12 +53,12 @@ BOOKS = [
 ]
 
 
-@app.get('/books')
+@app.get('/books', status_code=status.HTTP_200_OK)
 def get_all_books():
     return BOOKS
 
 
-@app.post('/create-book')
+@app.post('/create-book', status_code=status.HTTP_201_CREATED)
 def create_book(request: BookRequest):
     new_book = Book(**request.dict())
     BOOKS.append(get_id(new_book))
@@ -71,15 +72,16 @@ def get_id(book: Book):
     return book
 
 
-@app.get('/books/{book_id}')
+@app.get('/books/{book_id}', status_code=status.HTTP_200_OK)
 def get_book_by_id(book_id: int):
     for book in BOOKS:
         if book.id == book_id:
             return book
+    raise HTTPException(status_code=404, detail="The id not found!")
 
 
-@app.get('/books/')
-def get_books_by_rating(rating: int):
+@app.get('/books/', status_code=status.HTTP_200_OK)
+def get_books_by_rating(rating: int = Path(lt=0, gt=10)):
     return_books = []
     for book in BOOKS:
         if book.rating == rating:
@@ -87,14 +89,19 @@ def get_books_by_rating(rating: int):
     return return_books
 
 
-@app.put('/books/update_book')
+@app.put('/books/update_book', status_code=status.HTTP_204_NO_CONTENT)
 def update_book(book: BookRequest):
+    book_changed = False
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book.id:
             BOOKS[i] = book
+            book_changed = True
+
+    if not book_changed:
+        raise HTTPException(status_code=404, detail="Book doesn't updated")
 
 
-@app.delete('/books/{book_id}')
+@app.delete('/books/{book_id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_book_by_id(book_id: int):
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book_id:
@@ -102,8 +109,8 @@ def delete_book_by_id(book_id: int):
             break
 
 
-@app.get('/books/get_book/{published_date}')
-def get_book_by_published_date(published_date: int):
+@app.get('/books/get_book/{published_date}', status_code=status.HTTP_200_OK)
+def get_book_by_published_date(published_date: int = Path(lt=1900, gt=2023)):
     for book in BOOKS:
         if book.published_date == published_date:
             return book
